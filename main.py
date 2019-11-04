@@ -5,6 +5,8 @@ Created on Wed Jun 19 14:07:32 2019
 
 @author: lennert
 """
+
+#%%
 # LJ19062019
 # import statements
 
@@ -26,6 +28,13 @@ from aif360.datasets import BinaryLabelDataset
 
 # Set seed for reproducibility
 np.random.seed(1995)
+
+# NB: first 1000 lines of code were writting in Spyder 3.3.6
+# Spyder 4.0.0 supports code folding, so I updated Spyder on (04/11/2019)
+# If any problems may arise as a result of this update, consider reverting
+# to the 3.3.6 release.
+
+#%%
 
 ##### FUNCTIONS
 def time_diff_to_float(from_date, to_date):
@@ -76,16 +85,21 @@ def write_to_tex_table(table):
 #def create_plot(plot_type = 'hist', data, x_var, y_var, x_lab, y_lab, title):
 #    return True
 
+
+#%%
 # =============================================================================
 # GLOBALS
 # =============================================================================
+        
 # Figure directory
+        
 FIGURE_DIR ='/Users/lennertjansen/Documents/Studie/Econometrie/master/thesis/scripts/figures/recidivism/'
 
 
 # Figure dimensions (A4 Dimensions)
 FIG_DIM = (11.7, 8.27)
 
+#%%
 # =============================================================================
 # DATA PREPARATION & EXPLORATORY DATA ANALYSIS
 # =============================================================================
@@ -120,16 +134,17 @@ corr_mat = raw_df.corr()
 corr_heatmap = sns.heatmap(corr_mat,
             xticklabels = corr_mat.columns,
             yticklabels = corr_mat.columns)
+# IDEA: make correlation maps / heatmaps of all numerical variables
 
 
 
 # Get column names as dataframe to convert to latex table
 raw_df_colnames = raw_df.columns.str.strip().str.lower().str.replace(' ', '_').str.replace('(', '').str.replace(')', '').str.replace('-', '_').str.replace('___', '_').str.replace('__', '_')
 
-type(raw_df_colnames.values)
+#type(raw_df_colnames.values)
 variable_descript_df = pd.DataFrame(raw_df_colnames.values,
                                     columns = ['Variable name'])
-print(variable_descript_df.to_latex())
+#print(variable_descript_df.to_latex())
 
 ##### DATA PREPARATION
 # Methodology replication from original paper
@@ -169,6 +184,8 @@ df.isna().sum()
 
 nrow = df.shape[0]
 ncol = df.shape[1]
+
+#%%
 
 # =============================================================================
 # DEMOGRAPHIC BREAKDOWN GANG
@@ -214,7 +231,7 @@ plt.show()
 
 
 # Corresponding Pie Charts
-# Pie chart for general recidivism
+# Pie chart for violent recidivism
 # race
 labels_violent = list(cross_table_violent_sex_race.columns)
 del labels_violent[-1] #delete last term from labels ("All")
@@ -242,7 +259,7 @@ plt.axis('equal')
 plt.tight_layout()
 plt.show()
 
-
+#%%
 # AGE DISTRIBUTIONS
 
 #Color palette Set2 separate colors
@@ -372,15 +389,16 @@ for ind, label in enumerate(hist_vio_age_sex.get_xticklabels()):
 plt.tight_layout()
 hist_vio_age_sex.figure.savefig(FIGURE_DIR + 'hist_vio_age_sex.png')
 
+#%%
 # =============================================================================
-# 
+# OTHER PLOTS: e.g., DECILE SCORE DISTRIBUTION COMPARISONS
 # =============================================================================
 
 # Longer lengths of stay are slightly correlated with higher COMPAS scores
-np.corrcoef(df['length_of_stay'], df['decile_score'])[1][0]
+corr_coeff_length_stay_vs_decile_score = np.corrcoef(df['length_of_stay'], df['decile_score'])[1][0]
 
-# Demographic breakdown
-# Age category
+# 
+# Tables of Age category breakdowns (in percentages)
 df['age_cat'].value_counts()
 categorical_var_dist(df, 'age_cat')
 
@@ -398,10 +416,10 @@ categorical_var_dist(df, 'score_text')
 
 # Percentage of defendants that recidivate in two years
 recid_percentage = round((df[(df['two_year_recid'] == 1)].shape[0] / nrow) * 100, 2)
-print(recid_percentage, "%")
+#print(recid_percentage, "%")
 
 cross_table_sex_race = pd.crosstab(df.sex, df.race, margins = True)
-cross_table_sex_race.to_latex(escape = False)
+#cross_table_sex_race.to_latex(escape = False)
 
 write_to_tex_table(cross_table_sex_race)
 
@@ -504,6 +522,7 @@ hist_decile_female.set_ylabel("Count")
 hist_decile_female.set_xlabel("Decile score")
 hist_decile_female.figure.savefig(FIGURE_DIR + 'hist_decile_female.png')
 
+#%%
 # =============================================================================
 # LOGISTIC REGRESSIONS
 # =============================================================================
