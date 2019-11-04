@@ -527,7 +527,7 @@ hist_decile_female.figure.savefig(FIGURE_DIR + 'hist_decile_female.png')
 # LOGISTIC REGRESSIONS
 # =============================================================================
 # =============================================================================
-# MODEL 1
+# MODEL 1: using a logit model to draw inference about risk score categories
 # =============================================================================
 # Logistic regression model for comparing variables effect 
 # on risk scores (low (1-4) vs Med-High) i.e., LOW vs NOT-LOW
@@ -552,8 +552,8 @@ df_logit = fix_column_names(df_logit)
 # Drop reference categories
 df_logit = df_logit.drop(['age_cat_25_45', 'race_caucasian', 'sex_male',
                           'c_charge_degree_f'], axis = 1)
-
-logit_model =smf.Logit(df_logit['score_cat'], sm.add_constant(df_logit[['sex_female',
+# changed smf to sm (4/11/2019)
+logit_model =sm.Logit(df_logit['score_cat'], sm.add_constant(df_logit[['sex_female',
           'age_cat_greater_than_45', 'age_cat_less_than_25',
           'race_african_american', 'race_asian', 'race_hispanic',
           'race_native_american', 'race_other', 'priors_count',
@@ -567,31 +567,31 @@ logit_model =smf.Logit(df_logit['score_cat'], sm.add_constant(df_logit[['sex_fem
 logit_results = logit_model.fit()
 
 logit_results.summary()
-logit_results.params
-logit_results.predict
-dir(logit_results.summary())
+#logit_results.params
+#logit_results.predict
+#dir(logit_results.summary())
 
 # Print model summary as latex table
-print(logit_results.summary().as_latex())
-
-write_to_tex_table(logit_results.summary())
+#print(logit_results.summary().as_latex())
 
 # print model summary as LaTeX table (WIP)
-logit_results.summary().as_latex_tabular()
+#logit_results.summary().as_latex_tabular()
 # alternatively
-for table in logit_results.summary().tables:
-    print(table.as_latex_tabular())
+# for table in logit_results.summary().tables:
+#     print(table.as_latex_tabular())
 
 conf_mat_test = pd.crosstab(df_logit.two_year_recid,
                             df_logit.score_cat, margins = True)
+
+#%%
 # =============================================================================
-# MODEL 2
+# LOGIT MÂHDL 2: using a logit model to draw inference about recidivism
 # =============================================================================
 # Logistic regression model for comparing variables effect 
 # recidivism label
 # Main question: is there a significant difference between recidivism
 # predictions between races?
-logit_model2 =smf.Logit(df_logit['two_year_recid'], sm.add_constant(df_logit[['sex_female',
+logit_model2 =sm.Logit(df_logit['two_year_recid'], sm.add_constant(df_logit[['sex_female',
           'age_cat_greater_than_45', 'age_cat_less_than_25',
           'race_african_american', 'race_asian', 'race_hispanic',
           'race_native_american', 'race_other', 'priors_count',
@@ -605,6 +605,7 @@ print(logit_results2.summary().as_latex())
 # TODO: add all other races together to form one group or just remove them from
 # the dataset
 
+#%%
 # =============================================================================
 # Logit Regression Model 3:(violent_recid)Score category as dependent variable
 # =============================================================================
@@ -628,7 +629,7 @@ df_violent_logit = df_violent_logit.drop(['age_cat_25_45', 'race_caucasian', 'se
                           'c_charge_degree_f'], axis = 1)
     
 
-logit_violent_model =smf.Logit(df_violent_logit['score_cat'],
+logit_violent_model =sm.Logit(df_violent_logit['score_cat'],
                                sm.add_constant(df_violent_logit[['sex_female',
           'age_cat_greater_than_45', 'age_cat_less_than_25',
           'race_african_american', 'race_asian', 'race_hispanic',
@@ -640,12 +641,13 @@ logit_violent_results = logit_violent_model.fit()
 
 
 
-print(logit_violent_results.summary().as_latex())
+print(logit_violent_results.summary())
 
+#%%
 # =============================================================================
-# Logit model 4: violent model 2: recidivism prediction
+# Logit model 4: violent model 2: recidivism inference
 # =============================================================================
-logit_violent_model2 =smf.Logit(df_violent_logit['two_year_recid'],
+logit_violent_model2 =sm.Logit(df_violent_logit['two_year_recid'],
                                 sm.add_constant(df_violent_logit[['sex_female',
           'age_cat_greater_than_45', 'age_cat_less_than_25',
           'race_african_american', 'race_asian', 'race_hispanic',
@@ -655,15 +657,19 @@ logit_violent_model2 =smf.Logit(df_violent_logit['two_year_recid'],
 logit_violent_results2 = logit_violent_model2.fit()
 logit_violent_results2.summary()
 
-dir(logit_violent_results2)
+# alternative representation of model summary (e.g., summary2() reports AIC & BIC)
 logit_violent_results2.summary2()
 
-print(logit_violent_results2.summary().as_latex())
+#print(logit_violent_results2.summary().as_latex())
 
 
+#%%
 # =============================================================================
-# STOCHASTIC JUNGLE (RANDOM FOREST)
+# STOCHASTIC JUNGLE (RANDOM FOREST) // Predition-based inference
 # =============================================================================
+# TODO (s): try to optimise the RF models (e.g., using boosting or 
+# hyperparameter tuning with a validation set)
+
 # Create feature mat X and target vec y for random forest model
 # Drop string variables and variables that (implicitly) define the target var
 X_rf = df_logit.drop(['score_cat', 'c_jail_in', 'c_jail_out',
@@ -706,12 +712,13 @@ plt.legend()
 
 barplot_rf_feature_imp.figure.savefig(FIGURE_DIR +'barplot_rf_feature_imp.png')
 
+# Finding "unimportant" features. Arbitrary of course
 # Find features with relative importance lower than 1%
 feature_imp[np.where(feature_imp < 0.01)[0]]
 
 unimp_features = feature_imp[np.where(feature_imp < 0.01)[0]].index
 
-
+#%%
 # =============================================================================
 # RANDOM FOREST 2: Predicting actual recidivism
 # =============================================================================
@@ -751,6 +758,7 @@ plt.legend()
 
 barplot_rf2_feature_imp.figure.savefig(FIGURE_DIR +'barplot_rf2_feature_imp.png')
 
+#%%
 # =============================================================================
 # CDF OF RISK SCORE PER RACE
 # =============================================================================
@@ -764,20 +772,6 @@ df_by_group = df_by_group.set_index('race')
 # TODO change name from dummies_test to something more logical
 dummies_test = pd.get_dummies(df, columns = ['decile_score'])
 
-# TODO: DELETE
-# =============================================================================
-# df_race_decile = dummies_test[['decile_score_1',
-#                               'decile_score_2',
-#                               'decile_score_3',
-#                               'decile_score_4',
-#                               'decile_score_5',
-#                               'decile_score_6',
-#                               'decile_score_7',
-#                               'decile_score_8',
-#                               'decile_score_9',
-#                               'decile_score_10']].groupby(['race']).sum()
-# =============================================================================
-
 df_race_decile = dummies_test.groupby(['race']).sum() 
 df_race_decile = df_race_decile[['decile_score_1','decile_score_2',
                                  'decile_score_3','decile_score_4',
@@ -787,30 +781,7 @@ df_race_decile = df_race_decile[['decile_score_1','decile_score_2',
 df_by_race = df_by_group.merge(df_race_decile, left_on = None,
                                     right_on = None, left_index = True,
                                     right_index = True)
-# TODO DELETE
-# =============================================================================
-# # Plot CDF
-# plt.plot(np.cumsum(df_by_race.loc['African-American',
-#                :][1 : len(df_by_race.loc['African-American', :])] / df_by_race.loc['African-American', :][0]), 'r--')
-# 
-# plt.plot(np.cumsum(df_by_race.loc['Caucasian',
-#                :][1 : len(df_by_race.loc['Caucasian', :])] / df_by_race.loc['Caucasian', :][0]))
-# 
-# plt.plot(np.cumsum(df_by_race.loc['Asian',
-#                :][1 : len(df_by_race.loc['Asian', :])] / df_by_race.loc['Asian', :][0]))
-# plt.xticks(range(11))
-# plt.legend()
-# plt.tight_layout()
-# 
-# np.cumsum(df_by_race.loc['African-American',
-#                :][1 : len(df_by_race.loc['African-American', :])] / df_by_race.loc['African-American', :][0])
-# 
-# 
-# 
-# len(np.cumsum(df_by_race.loc['African-American', :][1 : len(df_by_race.loc['African-American', :])] / df_by_race.loc['African-American', :][0]))
-# np.cumsum(df_by_race.loc['African-American', :][1 : len(df_by_race.loc['African-American', :])] / df_by_race.loc['African-American', :][0]).values
-# 
-# =============================================================================
+
 # Create appropriate CDF dataframe for sns line plot argument style
 df_race_cdf = pd.DataFrame({'x' : range(11)})
 
@@ -836,9 +807,14 @@ cdf_by_race_plot.set_ylabel("Probability")
 cdf_by_race_plot.set_xlabel("Decile score")
 cdf_by_race_plot.figure.savefig(FIGURE_DIR + 'cdf_by_race_plot.png')
 
+#%%
 # =============================================================================
 # RECREATION OF PLOTS MENTIONED BY FELLER ET AL. (2016)
 # =============================================================================
+# TODO:
+# (1): add confidence bars to plots
+# (2): find a way increase the resolution of these plots
+# (3): add 10 to the end of the x-axis
 # Select subset of dataframe containing only black or white defendants
 df_bw = df[(df['race'] == 'African-American') | (df['race'] == 'Caucasian')]
 
@@ -878,27 +854,24 @@ for i in ['African-American', 'Caucasian']:
         df_bw_calib_plot.loc[j - 1, col_name] = value.values
         
         
-
-sns.distplot(df_bw_calib_plot['recid_rate_african_american'], x = df_bw_calib_plot.decile_score, hist = True, kde = False, label='Black')
-sns.distplot(df_bw_calib_plot['recid_rate_caucasian'], x = df_bw_calib_plot.decile_score, hist = True, kde = False, label='White')
         
-df_bw_calib_plot['recid_rate_african_american'].hist(bins = 10)
+#df_bw_calib_plot['recid_rate_african_american'].hist(bins = 10)
 
 df_bw_calib_plot.rename(columns = {'decile_score' : 'x'})
 
+
+# PLOTS: linegraphs of recidivism rate (y-axis) as function of risk score, per
+# sub-group comparison
+# Question that these graphs aim to answer: do the risk scores represent similar
+# probability distributions of recidivism for blacks vs whites and males vs females?
+# Caucasians vs African Americans
 sns.lineplot(data = df_bw_calib_plot['recid_rate_african_american'], label = 'Black')
 sns.lineplot(data = df_bw_calib_plot['recid_rate_caucasian'], label = 'White')
 plt.ylim(0, 1)
 
-sns.lineplot(data = df_bw_calib_plot['recid_rate_male'], label = 'Male')
-sns.lineplot(data = df_bw_calib_plot['recid_rate_female'], label = 'Female')
-plt.ylim(0, 1)
-
-sns.distplot(df_bw_calib_plot['recid_rate_african_american'], kde = False)
-sns.distplot(df_bw_calib_plot['recid_rate_caucasian'], kde = False)
-
+#%%
 # =============================================================================
-# Histogram
+# Histogram (Not sure what this is all about)
 # =============================================================================
 plt.hist(df_bw_calib_plot['recid_rate_african_american'], 10)
 
@@ -922,6 +895,8 @@ plt.bar(df_bw_calib_plot.decile_score,
         df_bw_calib_plot.recid_rate_caucasian)
 plt.bar(df_bw_calib_plot.decile_score, df_bw_calib_plot.recid_rate_male)
 plt.bar(df_bw_calib_plot.decile_score, df_bw_calib_plot.recid_rate_female)
+
+#%%
 # =============================================================================
 # Recreation of Feller et al's plot but for gender bias
 # =============================================================================
@@ -952,9 +927,21 @@ for i in ['Female', 'Male']:
         value = row_recid / row_total
         df_bw_calib_plot.loc[j - 1, col_name] = value.values
 
+
+
+# WIP: Males vs Females
+sns.lineplot(data = df_bw_calib_plot['recid_rate_male'], label = 'Male')
+sns.lineplot(data = df_bw_calib_plot['recid_rate_female'], label = 'Female')
+plt.ylim(0, 1)
+#%%
 # =============================================================================
 # CLASSIFICATION: FAIRNESS METRICS, BMA's, etc
 # =============================================================================
+# Preparing data for fairness metric analyses and bias mitigation algorithms
+# i.e., converting the relevant variables (sensitive attribute, prediction var,
+# and true outcome variable) to binary indicators
+
+# Racial bias: Caucasian vs African-American
 # Copy dataframe for section-specific manipulations (think of a better sol.)
 df_fm = df
 
@@ -1013,11 +1000,18 @@ bld_pred = BinaryLabelDataset(favorable_label = 0,
 unprivileged_map = [{'race' : 1}]
 privileged_map = [{'race' : 0}]
 
+#%%
+
+# =============================================================================
+# TESTING FAIRNESS METRIC FUNCTIONALITY OF AIF360
+# =============================================================================
 # Compute the classification metrics for the black vs white comparison
 fairness_metrics = ClassificationMetric(dataset = bld_true,
                      classified_dataset = bld_pred,
                      unprivileged_groups = unprivileged_map,
                      privileged_groups = privileged_map)
+
+fairness_metrics.generalized_entropy_index()
 
 # Confusion matrices for total pop, whites, blacks
 conf_mat_total = fairness_metrics.binary_confusion_matrix(privileged = None)
@@ -1088,10 +1082,15 @@ def confusion_matrix_to_dataframe(cm_dict, rates = False):
     return cm_df
 
 df_test = confusion_matrix_to_dataframe(cm_dict = conf_mat_total)
-        
+
+#%%
 # =============================================================================
-# FAIRNESS METRICS
+# FAIRNESS METRICS (FOR REAL THIS TIME)
 # =============================================================================
+# TODO: (1) Redo the previous cell for gender bias and recompute the corresponding
+# fairness metrics
+# (2)collect these values in a table
+# (3) think about a way to visualize these values
 # Statistical Parity difference (SPD)
 spd_pre_race = fairness_metrics.statistical_parity_difference()
 
@@ -1132,3 +1131,8 @@ df_fm.head()
 # =============================================================================
 # Create a subset of the dataframe with only the bare necessities
 # (ground truth, prediction, race)
+# =============================================================================
+# BIAS MITIGATION ALGORITHMS
+# =============================================================================
+
+
